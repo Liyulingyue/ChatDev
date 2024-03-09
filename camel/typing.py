@@ -51,6 +51,8 @@ class ModelType(Enum):
     GPT_4_TURBO = "gpt-4-1106-preview"
     GPT_4_TURBO_V = "gpt-4-1106-vision-preview"
 
+    Ernie = "Ernie"
+
     STUB = "stub"
 
     @property

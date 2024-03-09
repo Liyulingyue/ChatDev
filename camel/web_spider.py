@@ -6,7 +6,9 @@ import wikipediaapi
 import os
 import time
 
-self_api_key = os.environ.get('OPENAI_API_KEY')
+# self_api_key = os.environ.get('OPENAI_API_KEY')
+# TODO: Need to be delete
+self_api_key = "******************"
 BASE_URL = os.environ.get('BASE_URL')
 
 if BASE_URL:

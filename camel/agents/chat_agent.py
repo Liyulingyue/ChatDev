@@ -32,7 +32,8 @@ from chatdev.utils import log_visualize
 try:
     from openai.types.chat import ChatCompletion
 
-    openai_new_api = True  # new openai api version
+    # openai_new_api = True  # new openai api version
+    openai_new_api = False  # old openai api version
 except ImportError:
     openai_new_api = False  # old openai api version
 
@@ -100,6 +101,7 @@ class ChatAgent(BaseAgent):
         self.model_config: ChatGPTConfig = model_config or ChatGPTConfig()
         self.model_token_limit: int = get_model_token_limit(self.model)
         self.message_window_size: Optional[int] = message_window_size
+        assert self.model == ModelType.Ernie
         self.model_backend: ModelBackend = ModelFactory.create(self.model, self.model_config.__dict__)
         self.terminated: bool = False
         self.info: bool = False

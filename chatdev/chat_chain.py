@@ -48,6 +48,7 @@ class ChatChain:
         self.project_name = project_name
         self.org_name = org_name
         self.model_type = model_type
+        assert model_type == ModelType.Ernie
         self.code_path = code_path
 
         with open(self.config_path, 'r', encoding="utf8") as file:

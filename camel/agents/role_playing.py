@@ -97,6 +97,7 @@ class RolePlaying:
         self.with_task_planner = with_task_planner
         self.with_critic_in_the_loop = with_critic_in_the_loop
         self.model_type = model_type
+        assert model_type == ModelType.Ernie
         self.task_type = task_type
         self.memory = memory
 

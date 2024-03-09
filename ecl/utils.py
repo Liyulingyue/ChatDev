@@ -16,7 +16,9 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential
 )
-OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+# OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+# TODO: Need to be delete
+OPENAI_API_KEY = "sk-******************"
 if 'BASE_URL' in os.environ:
     BASE_URL = os.environ['BASE_URL']
 else:
