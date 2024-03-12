@@ -29,11 +29,12 @@ from camel.utils import (
     openai_api_key_required,
 )
 from chatdev.utils import log_visualize
-try:
-    from openai.types.chat import ChatCompletion
 
+import os
+if os.environ['openai_new_api'] == "1":
+    from openai.types.chat import ChatCompletion
     openai_new_api = True  # new openai api version
-except ImportError:
+else:
     openai_new_api = False  # old openai api version
 
 

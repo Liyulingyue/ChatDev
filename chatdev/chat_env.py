@@ -15,12 +15,12 @@ from chatdev.roster import Roster
 from chatdev.utils import log_visualize
 from ecl.memory import Memory
 
-try:
+import os
+if os.environ['openai_new_api'] == "1":
     from openai.types.chat.chat_completion_message_tool_call import ChatCompletionMessageToolCall
     from openai.types.chat.chat_completion_message import FunctionCall
-
     openai_new_api = True  # new openai api version
-except ImportError:
+else:
     openai_new_api = False  # old openai api version
 
 

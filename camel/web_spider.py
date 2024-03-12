@@ -6,7 +6,10 @@ import wikipediaapi
 import os
 import time
 
-self_api_key = os.environ.get('OPENAI_API_KEY')
+if "OPENAI_API_KEY" in os.environ:
+    self_api_key = os.environ['OPENAI_API_KEY']
+else:
+    self_api_key = "NO_OPENAI_KEY"
 BASE_URL = os.environ.get('BASE_URL')
 
 if BASE_URL:

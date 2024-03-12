@@ -21,21 +21,33 @@ from camel.typing import ModelType
 from chatdev.statistics import prompt_cost
 from chatdev.utils import log_visualize
 
-try:
+import os
+if os.environ['openai_new_api'] == "1":
     from openai.types.chat import ChatCompletion
-
     openai_new_api = True  # new openai api version
-except ImportError:
+else:
     openai_new_api = False  # old openai api version
+
 
 import os
 
-OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+if "OPENAI_API_KEY" in os.environ:
+    OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+else:
+    OPENAI_API_KEY = "NO_OPENAI_KEY"
 if 'BASE_URL' in os.environ:
     BASE_URL = os.environ['BASE_URL']
 else:
     BASE_URL = None
 
+if 'ernie_token' in os.environ:
+    ernie_token = os.environ['ernie_token']
+else:
+    ernie_token = "No_Ernie_Token"
+
+import erniebot
+erniebot.api_type = "aistudio"
+erniebot.access_token = ernie_token
 
 class ModelBackend(ABC):
     r"""Base class for different model backends.
@@ -64,6 +76,7 @@ class OpenAIModel(ModelBackend):
         self.model_config_dict = model_config_dict
 
     def run(self, *args, **kwargs):
+        print("OpenAIModel.run")
         string = "\n".join([message["content"] for message in kwargs["messages"]])
         encoding = tiktoken.encoding_for_model(self.model_type.value)
         num_prompt_tokens = len(encoding.encode(string))
@@ -144,6 +157,95 @@ class OpenAIModel(ModelBackend):
                 raise RuntimeError("Unexpected return from OpenAI API")
             return response
 
+class ErnieModel(ModelBackend):
+    r"""OpenAI API in a unified ModelBackend interface."""
+
+    def __init__(self, model_type: ModelType, model_config_dict: Dict) -> None:
+        super().__init__()
+        self.model_type = model_type
+        self.model_config_dict = model_config_dict
+
+    def result_format_as_openai(self, response):
+        # 将ernie的response格式转换成openai的response格式
+        openai_response = {
+            "id": "xxxxxxxxxxxxxxxxxxxxx",
+            "object": "chat.completion",
+            "created": 1,
+            "model": "Ernie",
+            "usage": {
+                "prompt_tokens": 1,
+                "completion_tokens": 1,
+                "total_tokens": 1
+            },
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": response.get_result()
+                    },
+                    "finish_reason": "stop",
+                    "index": 0
+                }
+            ]
+        }
+        return openai_response
+
+    def messages_reformat_as_ernie(self, messages):
+        last_message_be_user_flag = False
+        # 将openai的messages格式转换成ernie的messages格式
+        ernie_messages = []
+        for message in messages:
+            role = message["role"]
+            content = message["content"]
+            if "ass" in role:
+                last_message_be_user_flag = False
+                ernie_message = {
+                    "role": "assistant",
+                    "content": content,
+                }
+            else:
+                if last_message_be_user_flag == True:
+                    ernie_message = {
+                        "role": "assistant",
+                        "content": "Got it.",
+                    }
+                    ernie_messages.append(ernie_message)
+                last_message_be_user_flag = True
+                ernie_message = {
+                    "role": "user",
+                    "content": content,
+                }
+            ernie_messages.append(ernie_message)
+        return ernie_messages
+    def run(self, *args, **kwargs):
+        print("ErnieModel.run")
+        string = "\n".join([message["content"] for message in kwargs["messages"]])
+        # encoding = tiktoken.encoding_for_model(self.model_type.value)
+        # num_prompt_tokens = len(encoding.encode(string))
+        # gap_between_send_receive = 15 * len(kwargs["messages"])
+        # num_prompt_tokens += gap_between_send_receive
+
+
+        num_max_token_map = {
+            "Ernie": 2896,
+        }
+        # num_max_token = num_max_token_map[self.model_type.value]
+        # num_max_completion_tokens = num_max_token - num_prompt_tokens
+        # self.model_config_dict['max_tokens'] = num_max_completion_tokens
+
+        # response = openai.ChatCompletion.create(*args, **kwargs)
+        ernie_messages = self.messages_reformat_as_ernie(kwargs["messages"])
+        response = erniebot.ChatCompletion.create(
+            model="ernie-3.5",
+            messages=ernie_messages,
+        )
+        cost = -1
+        response = self.result_format_as_openai(response)
+        log_visualize("**[Ernie_Usage_Info Receive]\n")
+        if not isinstance(response, Dict):
+            raise RuntimeError("Unexpected return from OpenAI API")
+        return response
+
 
 class StubModel(ModelBackend):
     r"""A dummy model used for unit tests."""
@@ -185,6 +287,8 @@ class ModelFactory:
             None
         }:
             model_class = OpenAIModel
+        elif model_type == ModelType.Ernie:
+            model_class = ErnieModel
         elif model_type == ModelType.STUB:
             model_class = StubModel
         else:

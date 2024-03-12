@@ -17,12 +17,12 @@ from typing import Dict, Optional
 from camel.messages import BaseMessage
 from camel.typing import RoleType
 
-try:
+import os
+if os.environ['openai_new_api'] == "1":
     from openai.types.chat.chat_completion_message_tool_call import ChatCompletionMessageToolCall
     from openai.types.chat.chat_completion_message import FunctionCall
-
     openai_new_api = True  # new openai api version
-except ImportError:
+else:
     openai_new_api = False  # old openai api version
 
 
